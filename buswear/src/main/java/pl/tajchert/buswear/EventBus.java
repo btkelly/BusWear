@@ -27,10 +27,13 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 
 import pl.tajchert.buswear.wear.SendByteArrayToNode;
 import pl.tajchert.buswear.wear.SendCommandToNode;
 import pl.tajchert.buswear.wear.WearBusTools;
+import pl.tajchert.buswear.wear.connection.WearConnectionEvent;
 
 /**
  * EventBus is a central publish/subscribe event system for Android. Events are posted ({@link #post(Object)}) to the
@@ -59,6 +62,8 @@ public class EventBus {
 
     private final Context context;
     private final org.greenrobot.eventbus.EventBus eventBus;
+    private final ConnectionUtil connectionUtil;
+    private List<Class<?>> remoteStickyEvents = new ArrayList<Class<?>>();
 
     public EventBus(@NonNull Context context) {
         this(context, org.greenrobot.eventbus.EventBus.getDefault());
@@ -67,6 +72,20 @@ public class EventBus {
     public EventBus(@NonNull Context context, @NonNull org.greenrobot.eventbus.EventBus eventBus) {
         this.context = context.getApplicationContext();
         this.eventBus = eventBus;
+        this.connectionUtil = new ConnectionUtil(context);
+        this.eventBus.register(this);
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND, sticky = true)
+    public void onWearConnectionEvent(WearConnectionEvent wearConnectionEvent) {
+        Log.i(WearBusTools.BUSWEAR_TAG, "WearConnectionEvent connected: " + wearConnectionEvent.hasBusWearConnection());
+        if (wearConnectionEvent.hasBusWearConnection()) {
+            for (Class<?> clazz : remoteStickyEvents) {
+                Log.i(WearBusTools.BUSWEAR_TAG, "Syncing sticky event for class " + clazz);
+                Object stickyEvent = eventBus.getStickyEvent(clazz);
+                postStickyRemote(stickyEvent);
+            }
+        }
     }
 
     /******************** Greenrobot Proxy Methods ************************/
@@ -186,6 +205,10 @@ public class EventBus {
      * @param event any kind of Object, no restrictions.
      */
     public void postStickyRemote(Object event) {
+        if (!remoteStickyEvents.contains(event.getClass())) {
+            remoteStickyEvents.add(event.getClass());
+        }
+
         sendEventOverGooglePlayServices(event, true);
     }
 
@@ -197,6 +220,7 @@ public class EventBus {
      * @return
      */
     public <T> void removeStickyEventRemote(Class<T> eventType) {
+        remoteStickyEvents.remove(eventType);
         new SendCommandToNode(WearBusTools.PREFIX_CLASS + WearBusTools.MESSAGE_PATH_COMMAND, null, eventType, context).start();
     }
 
@@ -206,6 +230,7 @@ public class EventBus {
      * @return true if the events matched and the sticky event was removed.
      */
     public void removeStickyEventRemote(Object event) {
+        remoteStickyEvents.remove(event.getClass());
         byte[] objectInArray = WearBusTools.parseToSend(event);
         if (objectInArray != null) {
             new SendCommandToNode(WearBusTools.PREFIX_EVENT + WearBusTools.MESSAGE_PATH_COMMAND, objectInArray, event.getClass(), context).start();
@@ -216,6 +241,7 @@ public class EventBus {
      * Removes all sticky events, on the remote event bus only
      */
     public void removeAllStickyEventsRemote() {
+        remoteStickyEvents.clear();
         new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND, WearBusTools.ACTION_STICKY_CLEAR_ALL.getBytes(), String.class, context).start();
     }
 

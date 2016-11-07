@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion "23.0.3"
 
     defaultConfig {
@@ -35,6 +35,6 @@ sourceSets {
 
 dependencies {
     compile 'org.greenrobot:eventbus:3.0.0'
-    provided 'com.google.android.gms:play-services-wearable:9.6.1'
+    provided 'com.google.android.gms:play-services-wearable:9.8.0'
 }
 

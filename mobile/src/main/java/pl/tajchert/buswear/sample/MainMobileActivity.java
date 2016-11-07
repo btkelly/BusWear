@@ -2,6 +2,7 @@ package pl.tajchert.buswear.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +16,8 @@ import java.util.List;
 import java.util.Random;
 
 import pl.tajchert.buswear.EventBus;
+import pl.tajchert.buswear.wear.WearBusTools;
+import pl.tajchert.buswear.wear.connection.WearConnectionEvent;
 
 public class MainMobileActivity extends AppCompatActivity {
 
@@ -50,7 +53,7 @@ public class MainMobileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Send Custom object to both local and remote EventBus
-                EventBus.getDefault(v.getContext()).post(new CustomObject(editTextToSend.getText().toString()));
+                EventBus.getDefault(v.getContext()).postSticky(new CustomObject(editTextToSend.getText().toString()));
             }
         });
         buttonLocal.setOnClickListener(new View.OnClickListener() {
@@ -116,5 +119,10 @@ public class MainMobileActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDouble(Double aDouble) {
         Toast.makeText(this, "Double: " + aDouble, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND, sticky = true)
+    public void onWearConnectionEvent(WearConnectionEvent wearConnectionEvent) {
+        Log.i(WearBusTools.BUSWEAR_TAG, "WearConnectionEvent connected: " + wearConnectionEvent.hasBusWearConnection());
     }
 }

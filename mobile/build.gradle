@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion "23.0.3"
 
     defaultConfig {
@@ -23,6 +23,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     wearApp project(':wear')
     compile project(':buswear')
-    compile 'com.google.android.gms:play-services-wearable:9.6.1'
-    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile 'com.google.android.gms:play-services-wearable:9.8.0'
+    compile 'com.android.support:appcompat-v7:25.0.0'
 }

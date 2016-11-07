@@ -2,6 +2,7 @@ package pl.tajchert.buswear.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -10,6 +11,8 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import pl.tajchert.buswear.EventBus;
+import pl.tajchert.buswear.wear.WearBusTools;
+import pl.tajchert.buswear.wear.connection.WearConnectionEvent;
 
 public class MainWearActivity extends Activity {
 
@@ -41,7 +44,7 @@ public class MainWearActivity extends Activity {
 
     //They are just samples, you just implement those "onEvent()" which you use to post, and correct method will be called
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onEvent(CustomObject customObjectReceived) {
         Toast.makeText(MainWearActivity.this, "Object: " + customObjectReceived.getName(), Toast.LENGTH_SHORT).show();
     }
@@ -74,5 +77,10 @@ public class MainWearActivity extends Activity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(Short shortReceived) {
         Toast.makeText(MainWearActivity.this, "Received Short", Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND, sticky = true)
+    public void onWearConnectionEvent(WearConnectionEvent wearConnectionEvent) {
+        Log.i(WearBusTools.BUSWEAR_TAG, "WearConnectionEvent connected: " + wearConnectionEvent.hasBusWearConnection());
     }
 }
